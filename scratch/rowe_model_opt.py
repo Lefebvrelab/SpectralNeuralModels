@@ -1,7 +1,8 @@
 from matplotlib import pyplot as plt
 import numpy as np
-from numpy import pi,abs,exp
+import pandas as pd
 
+from numpy import pi,abs,exp
 from scipy import optimize
 
 class Rowe2004Model():
@@ -201,6 +202,42 @@ class Rowe2004Model():
                                          
         return term1 * term2
     
+    
+    def compute_vector_P_EEG(self):
+        '''
+        Computes the P_EEG for every freq in self.freq.
+        '''
+        
+        G_sn,G_ie,lx,ly,r_e = self.G_sn,self.G_ie,self.lx,self.ly,self.r_e
+        k0 = self.k0
+        
+        # Vectorized functions
+        P0 = self.compute_P0()
+        L_fun = np.vectorize(self.compute_L)
+        T_fun = np.vectorize(self.compute_T)
+        q2r2_fun = np.vectorize(self.compute_q2r2)
+        
+        # Arrays
+        L = L_fun(self.freqs)
+        T = T_fun(self.freqs)
+        q2r2 = q2r2_fun(self.freqs)
+        
+        fmax = self.fmax
+        term1 = P0 * abs(  ((L * T) / G_sn) / ( 1- G_ie * L ) )** 2 * (2 * pi)**2 / (lx*ly)
+        
+        term2 = np.zeros(len(self.freqs))
+        
+        for m in np.arange(-fmax,fmax):
+            for n in  np.arange(-fmax,fmax):
+                
+                k2r2 = self.compute_k2r2(m,n)
+                k2 = k2r2/(r_e**2.)
+                
+                term2+= (exp((-k2**2)/(k0**2)) ) /  abs(k2 * r_e**2. + q2r2) **2  
+                
+        return term1 * term2
+    
+        
     # For optimization
     def update_compute_P_EEG(self, values, param_list):
         '''
@@ -213,11 +250,7 @@ class Rowe2004Model():
         for k in range(N):
             setattr(self, param_list[k], values[k])
         
-        output = []
-        for j in range(len(self.freqs)):
-            output.append(self.compute_P_EEG(self.freqs[j]))
-                          
-        return np.array(output)
+        return self.compute_vector_P_EEG()
     
     
 class RoweOptimization():
@@ -283,15 +316,10 @@ if __name__ == '__main__':
         result = rowe_opt.optimize(['sigma_e', 'theta_e'])
     
     elif task == 'graph':
-        freqs = np.linspace(0.001,100)
+        freqs = np.linspace(0.001,100, num=50)
         mod = Rowe2004Model(freqs=freqs)
         
-        L = mod.compute_L(freqs)
-        S = mod.compute_S(freqs)
-        P0 = mod.compute_P0()#freqs)
-        
-        EEG = mod.compute_P_EEG()#freqs)
-        
+        EEG = mod.compute_vector_P_EEG()
         df_EEG = pd.DataFrame(np.squeeze(EEG))
         
         df_EEG.abs().plot(logx=True,logy=True)        
