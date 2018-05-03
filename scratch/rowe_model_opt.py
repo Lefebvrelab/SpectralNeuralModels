@@ -2,7 +2,7 @@ from matplotlib import pyplot as plt
 import numpy as np
 import pandas as pd
 
-from numpy import pi,abs,exp
+from numpy import pi,abs,exp,log
 from scipy import optimize
 
 class Rowe2004Model():
@@ -178,7 +178,10 @@ class Rowe2004Model():
 
     
     def compute_P_EEG(self, omega):
-    
+        '''
+        Computes the P_EEG of a single frequency omega.
+        '''
+        
         G_sn,G_ie,lx,ly,r_e = self.G_sn,self.G_ie,self.lx,self.ly,self.r_e
         k0 = self.k0
         
@@ -192,6 +195,7 @@ class Rowe2004Model():
         term1  = P0 * abs(  ((L * T) / G_sn) / ( 1- G_ie * L ) )** 2 * (2 * pi)**2 / (lx*ly)
             
         term2 = 0
+        # Can be summed over |m|, |n| < fmax / 2
         for m in np.arange(-fmax,fmax):
             for n in  np.arange(-fmax,fmax):
                 
@@ -205,7 +209,7 @@ class Rowe2004Model():
     
     def compute_vector_P_EEG(self):
         '''
-        Computes the P_EEG for every freq in self.freq.
+        Computes the P_EEG for every freq in self.freq. Used for optimization.
         '''
         
         G_sn,G_ie,lx,ly,r_e = self.G_sn,self.G_ie,self.lx,self.ly,self.r_e
@@ -266,8 +270,10 @@ class RoweOptimization():
         self.freqs = np.array([train[k][0] for k in range(len(train))])
         self.output = np.array([train[k][1] for k in range(len(train))])
         self.rowe = Rowe2004Model(freqs=self.freqs)
-    
-    
+        
+        self.variance = get_var_weights(self.freqs)
+        
+        
     def optimize(self, param_list, tol=None):
         '''
         Fit the model by adjusting the listed parameters (given in strings)
@@ -276,8 +282,13 @@ class RoweOptimization():
         # Define the function w.r.t. the parameters. The vector P has the same
         # length as params, with 1-1 coordinate correspondance.
         EEG_fun = lambda P: self.rowe.update_compute_P_EEG(P, param_list)
-        ERR_fun = lambda P: sum((EEG_fun(P) - self.output)**2) / 2
-    
+        
+        # Consider taking logorithmic difference (see paper). Make tolerance
+        # 50.
+        # ERR_fun = lambda P: sum((EEG_fun(P) - self.output)**2) / 2
+        ERR_fun = lambda P: sum((log(abs(EEG_fun(P))) - log(abs(self.output)))**2 / self.variance)
+        
+        
         # Get initial parameter values
         P0 = []
         for j in range(len(param_list)):
@@ -304,11 +315,38 @@ class RoweOptimization():
         result = optimize.minimize(ERR_fun, P0, bounds=bounds_list, tol=tol)
         
         return result
-    
+        
 
+# SUPPLEMENTARY FUNCTIONS
+def get_var_weights(freqs):
+    '''
+    Returns the variance weightings for an array of frequencies.
+    '''
+    
+    var_weights = []
+    for k in range(len(freqs)):
+        
+        freq = freqs[k]
+        weight = 1
+        
+        # Assign weight
+        if freq <= 30:
+            weight = 4**2
+            
+        elif freq < 60 and freq > 30:
+            weight = 10**2
+            
+        elif freq >= 60:
+            weight = 4**2
+        
+        var_weights.append(weight)
+    
+    return np.array(var_weights)
+        
+        
 if __name__ == '__main__':
     
-    task = 'graph'
+    task = 'optimize'
     
     if task == 'optimize':
         train_data = [(1,2), (3,4)]
@@ -323,3 +361,4 @@ if __name__ == '__main__':
         df_EEG = pd.DataFrame(np.squeeze(EEG))
         
         df_EEG.abs().plot(logx=True,logy=True)        
+
