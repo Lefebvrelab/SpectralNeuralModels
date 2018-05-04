@@ -30,7 +30,7 @@ class Rowe2004Model():
         self.r_i = self.r_r = self.r_s = None
        
         self.va = 8.
-        self.t0 = 84.
+        self.t0 = 0.084
         self.k0 = 30.
         self.v_ee = self.v_es = self.v_se = 1.2
         self.v_ei = -1.8
