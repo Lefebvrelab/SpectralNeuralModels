@@ -2,7 +2,7 @@ from matplotlib import pyplot as plt
 import numpy as np
 import pandas as pd
 
-from numpy import pi,abs,exp,log
+from numpy import pi,abs,exp,log,log10
 from scipy import optimize
 
 class Rowe2004Model():
@@ -15,6 +15,9 @@ class Rowe2004Model():
         # Initialize parameters
         self.freqs = freqs
         
+        # Scaling parameter (to adjust the magnitude of the entire model)
+        self.amp = 1.
+        
         # Table 1
         self.sigma_e = 3.3
         self.theta_e = 15. # In s**-1
@@ -22,12 +25,11 @@ class Rowe2004Model():
         self.beta_over_alpha = 3.8
         self.beta = self.beta_over_alpha * self.alpha
         
-        
-        self.r_e = 80.
+        self.r_e = 0.08
         self.r_i = self.r_r = self.r_s = None
        
         self.va = 8.
-        self.t0 = 84.
+        self.t0 = 0.084
         self.k0 = 30.
         self.v_ee = self.v_es = self.v_se = 1.2
         self.v_ei = -1.8
@@ -42,11 +44,11 @@ class Rowe2004Model():
 
         self.Q_a = 250.
 
-        self.G_ee = 6.
+        self.G_ee = 5.4
         self.G_ei = -7.
         self.G_ese = 5.6
         self.G_esre = -2.8
-        self.G_srs = -0.4
+        self.G_srs = -0.6
 
         self.G_es = 0.03 # This should be positive
         self.G_se = self.G_ese / self.G_es
@@ -72,6 +74,8 @@ class Rowe2004Model():
         
         
         # Table 1 bounds
+        self.bound_amp = [1E-28, 1.]
+        
         self.bound_sigma_e = [3.,8.]
         self.bound_theta_e = [10.,25.]
         self.bound_alpha = [35.,150.]
@@ -181,6 +185,7 @@ class Rowe2004Model():
         
         G_sn,G_ie,lx,ly,r_e = self.G_sn,self.G_ie,self.lx,self.ly,self.r_e
         k0 = self.k0
+        A = self.amp
         
         P0 = self.compute_P0()
         L = self.compute_L(omega)
@@ -199,9 +204,9 @@ class Rowe2004Model():
                 k2r2 = self.compute_k2r2(m,n)
                 k2 = k2r2/(r_e**2.)
                 
-                term2+= (exp((-k2**2)/(k0**2)) ) /  abs(k2 * r_e**2. + q2r2) **2                          
+                term2+= (exp(-k2/(k0**2)) ) /  abs(k2r2 + q2r2) **2                          
                                          
-        return term1 * term2
+        return A * term1 * term2
     
     
     def compute_vector_P_EEG(self):
@@ -211,6 +216,7 @@ class Rowe2004Model():
         
         G_sn,G_ie,lx,ly,r_e = self.G_sn,self.G_ie,self.lx,self.ly,self.r_e
         k0 = self.k0
+        A = self.amp
         
         # Vectorized functions
         P0 = self.compute_P0()
@@ -234,9 +240,9 @@ class Rowe2004Model():
                 k2r2 = self.compute_k2r2(m,n)
                 k2 = k2r2/(r_e**2.)
                 
-                term2+= (exp((-k2**2)/(k0**2)) ) /  abs(k2 * r_e**2. + q2r2) **2  
+                term2+= (exp(-k2/(k0**2)) ) /  abs(k2r2 + q2r2) **2  
                 
-        return term1 * term2
+        return A * term1 * term2
     
         
     # For optimization
@@ -292,8 +298,10 @@ class RoweOptimization():
         
         # Consider taking logorithmic difference (see paper). Make tolerance
         # 50.
+        
         # ERR_fun = lambda P: sum((EEG_fun(P) - self.output)**2) / 2
-        ERR_fun = lambda P: sum((log(abs(EEG_fun(P))) - log(abs(self.output)))**2 / self.variance)
+        ERR_fun = lambda P: sum(((EEG_fun(P) - self.output) / self.output )**2)
+        # ERR_fun = lambda P: sum((log(abs(EEG_fun(P))) - log(abs(self.output)))**2 / self.variance)
         
         
         # Get initial parameter values
@@ -338,7 +346,7 @@ def get_var_weights(freqs):
         
         # Assign weight
         if freq <= 20:
-            weight = 10**2
+            weight = 4**2
             
         elif freq < 60 and freq > 20:
             weight = 2**2
@@ -353,7 +361,7 @@ def get_var_weights(freqs):
         
 if __name__ == '__main__':
     
-    task = 'optimize'
+    task = 'graph'
     
     if task == 'optimize':
         
@@ -377,15 +385,14 @@ if __name__ == '__main__':
                       'G_srs'
                       ]
                       
-        result = rowe_opt.optimize(param_list, tol=50)
+        result = rowe_opt.optimize(param_list, tol=10)
         
         # Get model values
-        for k in range(len(param_list)):
-            setattr(rowe_opt.rowe, param_list[k], result.x[k])
+        # for k in range(len(param_list)):
+            # setattr(rowe_opt.rowe, param_list[k], result.x[k])
         
         model_powers = rowe_opt.rowe.compute_vector_P_EEG()
-        plt.plot(log(freqs), log(model_powers), 'r--',
-                 log(freqs), log(powers))
+        plt.plot(log10(freqs), log10(model_powers), 'r--', log10(freqs), log10(powers))
         plt.show()
         
     elif task == 'graph':
