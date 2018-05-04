@@ -5,12 +5,15 @@ import pandas as pd
 from numpy import pi,abs,exp,log
 from scipy import optimize
 
+from ipywidgets import *
+
+
 class Rowe2004Model():
 
     def __init__(self,freqs=None, alpha = 88.,gamma = 71.8, t_0 = 79.2,
                  G_ee = 3.8,G_ei = -8.,G_ese = 10.8, G_esre = -5.7,
                  G_srs = -0.34, p_0 = 2.94,
-                 r_e=80.):
+                 r_e=80.,phi_n=None):
         
         # Initialize parameters
         self.freqs = freqs
@@ -63,8 +66,11 @@ class Rowe2004Model():
         self.lx = 0.5 # from Abeysuria. Unit = m.
         self.ly = 0.5 # from Abeysuria. Unit = m.
         
-        self.phi_n = np.random.rand(1,len(self.freqs))[0]
-        
+        if phi_n is None:
+          self.phi_n = np.random.rand(1,len(self.freqs))[0]
+        else:
+          self.phi_n = phi_n
+
         self.freq_min = 5.
         self.freq_max = 100
         
