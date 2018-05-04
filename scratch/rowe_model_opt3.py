@@ -219,13 +219,13 @@ class RoweOptimization():
 
 if __name__ == '__main__':
     
-    task = 'graph'
+    task = 'optimize'
     
     if task == 'optimize':
         # Get training data
         text_file = np.loadtxt('EEG_data.csv', skiprows=1, delimiter=',')
         freqs = text_file[1:,0]
-        powers = text_file[1:,1]
+        powers = text_file[1:,1]*10**24
         
         N = min(len(freqs), len(powers))
         train_data = [(freqs[k], powers[k]) for k in range(N)]
@@ -245,16 +245,15 @@ if __name__ == '__main__':
         result = rowe_opt.optimize(param_list, tol=5)
         
         model_powers = rowe_opt.mod.compute_P(freqs)
-        plt.plot(freqs, log10(powers), 'r--',
-                 freqs, log10(model_powers))
+        plt.plot(freqs, powers, 'r--',
+                 freqs, model_powers)
         plt.show()
     
     elif task == 'graph':
         freqs = np.linspace(0.2,100, num=50)
         mod = Rowe2015Model()
         
-        EEG.G_srs = -0.01
-        EEG = mod.compute_P(freqs)
+        EEG = mod.compute_P(freqs) - mod.compute_P_EEG(freqs)
         df_EEG = pd.DataFrame(np.squeeze(EEG))
         
         df_EEG.abs().plot(logx=True,logy=True)   
