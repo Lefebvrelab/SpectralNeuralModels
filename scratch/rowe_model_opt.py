@@ -257,6 +257,61 @@ class Rowe2004Model():
         return self.compute_vector_P_EEG()
     
     
+    def plot_widget(self):
+        
+        EEG_toplot = np.abs(np.squeeze(self.compute_vector_P_EEG()))
+        
+        widg_fig = plt.figure()
+        widg_ax = widg_fig.add_subplot(1, 1, 1)
+        widg_line, = widg_ax.plot(EEG_toplot)
+        
+        phi_n = self.phi_n
+        
+        def update_widget(alpha=88.0, gamma=71.8, t_0=79.2, 
+                       G_ee=3.8, G_ei=-8.0, G_ese=10.8,
+                       G_esre=-5.7, G_srs=-0.34, p_0=2.94, r_e=80.0):
+        
+        
+            freqs = np.linspace(0.001,100)
+            
+            newmod = Rowe2004Model(freqs=freqs,
+                                   alpha=alpha, 
+                                   gamma=gamma,
+                                   t_0=t_0,
+                                   G_ee=G_ee,
+                                   G_ei=G_ei,
+                                   G_ese=G_ese,
+                                   G_esre=G_esre,
+                                   G_srs=G_srs,
+                                   p_0=p_0,
+                                   r_e=r_e,
+                                   phi_n=phi_n)
+            
+            #EEG_toplot = np.abs(np.squeeze(newmod.compute_EEG()))
+            EEG_toplot = np.abs(np.squeeze(newmod.compute_vector_P_EEG()))
+
+            widg_line.set_ydata(EEG_toplot)
+            
+            #line.set_ydata(np.sin(w * x))
+            widg_fig.canvas.draw()
+
+            widg_ax.set_xlim([0,100])
+            widg_ax.set_ylim([0.00001,100.])
+            #ax.semilogx()
+            
+            widg_ax.semilogy()
+
+    
+    
+    
+        # interact(update_widget)
+        self.widg = interactive(update_widget)
+        display(self.widg)
+    
+
+
+
+    
 class RoweOptimization():
     '''
     Optimizing the Rowe Model onto a training set.
