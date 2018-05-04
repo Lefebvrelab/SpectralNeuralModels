@@ -208,7 +208,7 @@ class Rowe2004Model():
                 k2r2 = self.compute_k2r2(m,n)
                 k2 = k2r2/(r_e**2.)
                 
-                term2+= (exp((-k2**2)/(k0**2)) ) /  abs(k2 * r_e**2. + q2r2) **2                          
+                term2+= (exp(-k2/(k0**2)) ) /  abs(k2r2 + q2r2) **2                          
                                          
         return term1 * term2
     
