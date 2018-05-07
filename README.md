@@ -1,9 +1,7 @@
 # Spectral Neural Models 
 
-
 [![Binder](https://mybinder.org/badge.svg)](https://mybinder.org/v2/gh/Lefebvrelab/SpectralNeuralModels/master)
 
-# Spectral Neural Models 
 
 ## Overview
 
