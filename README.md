@@ -1,6 +1,10 @@
 # Spectral Neural Models 
 
 
+[![Binder](https://mybinder.org/badge.svg)](https://mybinder.org/v2/gh/Lefebvrelab/SpectralNeuralModels/master)
+
+# Spectral Neural Models 
+
 ## Overview
 
 This repository contains notes and code relating to spectral- (i.e. frequency) domain models of macro-scale neural dynamics. 
