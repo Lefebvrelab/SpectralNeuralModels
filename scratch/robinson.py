@@ -199,7 +199,7 @@ class Abeysuriya2015Model():
         return P
 
 
-    def fit(self,data,freqs,param_list,tol,normalize=False):
+    def fit(self,data,freqs,param_list,tol,normalize=False,fit_log=False):
         '''
         Optimizing the Rowe Model onto a training set. The key parameters to adjust
         are as follows:
@@ -223,8 +223,13 @@ class Abeysuriya2015Model():
         
         self.orig_mod = deepcopy(self)
         
+        data = data.copy()
+
         
+        if fit_log: data = np.log1p(data)
+
         if normalize:  data = data/data.max()
+
         data[np.isnan(data)] = 0
         
         self.optimize_freqs = freqs
@@ -236,7 +241,11 @@ class Abeysuriya2015Model():
         
         # Define the function w.r.t. the parameters. The vector P has the same
         # length as params, with 1-1 coordinate correspondance.
-        EEG_fun = lambda P: self.update_and_compute_P(P, param_list,freqs,normalize=normalize)  
+        
+        if fit_log: 
+          EEG_fun = lambda P: np.log1p(self.update_and_compute_P(P, param_list,freqs,normalize=normalize))
+        else:
+          EEG_fun = lambda P: self.update_and_compute_P(P, param_list,freqs,normalize=normalize)  
         chi_fun = lambda P: sum(((EEG_fun(P) - data) / data)**2)
         
         # Get initial parameter values
