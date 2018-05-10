@@ -286,7 +286,7 @@ class Abeysuriya2015Model():
         return fit_result,fit_df
     
 
-    def plot_widget(self,normalize=False):
+    def plot_widget(self,normalize=False,linestyle='-'):
         
         
         x = self.compute_P(self.freqs,normalize=normalize)
@@ -294,7 +294,7 @@ class Abeysuriya2015Model():
         
         self.widg_fig = plt.figure()
         self.widg_ax = self.widg_fig.add_subplot(1, 1, 1)
-        self.widg_line, = self.widg_ax.plot(self.freqs,x) #x, np.sin(x))
+        self.widg_line, = self.widg_ax.plot(self.freqs,x,linestyle=linestyle) #x, np.sin(x))
 
         self.widg_ax.set_xlim([5, 120]) # 0,100])
         
