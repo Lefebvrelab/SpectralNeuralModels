@@ -222,7 +222,9 @@ class Abeysuriya2015Model():
         #self.optimize_output = np.array([train[k][1] for k in range(len(train))
         
         self.orig_mod = deepcopy(self)
-        
+       
+        freqs = freqs.copy()
+ 
         data = data.copy()
 
         
