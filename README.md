@@ -32,3 +32,10 @@ c) *fitting*  to empirical M/EEG power spectra, and assessing alternative optimi
 
 
 
+---
+
+***Check these out:***
+
+[Interactive widget and model fitting for the Abeysuriya-Robinson model (live binder notebook)](https://mybinder.org/v2/gh/Lefebvrelab/SpectralNeuralModels/master?filepath=notes%2Fnotebooks%2Flooking_at_the_abeysuriya_model.ipynb)
+
+[Some notes on the model equations](https://github.com/Lefebvrelab/SpectralNeuralModels/blob/master/notes/notebooks/robinson_spectral_model_notes.ipynb) 
