@@ -38,6 +38,7 @@ class Abeysuriya2015Model():
         self.n_freqs = 50
 
         self.freqs = np.linspace(self.freq_min,self.freq_max,num=self.n_freqs)
+        self.omega = 2. * pi * self.freqs
 
         # Variable parameters
         self.G_ee = 5.4
@@ -112,10 +113,12 @@ class Abeysuriya2015Model():
         return k2r2
     
     
-    def compute_P_EEG(self, omega=None):
+    def compute_P_EEG(self, freqs=None):
         
-        if omega is None: omega = self.freqs
+        if freqs is None: freqs = self.freqs
 
+        omega = 2. * pi * freqs
+            
         G_ei, G_ee = self.G_ei, self.G_ee
         G_ese, G_esre, G_srs = self.G_ese, self.G_esre, self.G_srs
         t0 = self.t0
@@ -150,24 +153,27 @@ class Abeysuriya2015Model():
         P_EEG = abs(term1)**2 * abs(term2)**2 * term3 
   
     
-        df_P_EEG = pd.DataFrame(P_EEG,index=omega,columns=['power'])
+        df_P_EEG = pd.DataFrame(P_EEG,index=freqs,columns=['power'])
         df_P_EEG.index.names = ['Hz']
 
         return P_EEG
     
     
-    def compute_P(self, omega,return_df=False,normalize=False):
+    def compute_P(self, freqs,return_df=False,normalize=False):
         '''
         Compute the power spectrum.
         '''
         
+        omega = 2. * pi * freqs
+
         A_EMG, f_EMG = self.A_EMG, self.f_EMG
         
         mod_omega = omega / (2 * pi * f_EMG)
         P_EMG = A_EMG * (mod_omega)**2 / (1 + mod_omega**2)**2
         
-        P_EEG = self.compute_P_EEG(omega)
-
+        P_EEG = self.compute_P_EEG(freqs)
+        
+        
         P_EEG_EMG = P_EEG + P_EMG
         
         if normalize: 
@@ -182,7 +188,7 @@ class Abeysuriya2015Model():
         if return_df == False:
             return P_EEG_EMG
         else:
-            df = pd.DataFrame([P_EEG, P_EMG, P_EEG_EMG], columns=omega,index=['P_EEG', 'P_EMG','P_EEG_EMG']).T
+            df = pd.DataFrame([P_EEG, P_EMG, P_EEG_EMG], columns=freqs,index=['P_EEG', 'P_EMG','P_EEG_EMG']).T
             df.index.names = ['Hz']
             return df
         
@@ -225,6 +231,8 @@ class Abeysuriya2015Model():
        
         freqs = freqs.copy()
  
+        omega = 2. * pi * freqs
+
         data = data.copy()
 
         
@@ -286,7 +294,7 @@ class Abeysuriya2015Model():
         return fit_result,fit_df
     
 
-    def plot_widget(self,normalize=False,linestyle='-'):
+    def plot_widget(self,normalize=False,linestyle='-',logx=True,logy=True,xrange=[5,120],yrange=None):
         
         
         x = self.compute_P(self.freqs,normalize=normalize)
@@ -296,19 +304,22 @@ class Abeysuriya2015Model():
         self.widg_ax = self.widg_fig.add_subplot(1, 1, 1)
         self.widg_line, = self.widg_ax.plot(self.freqs,x,linestyle=linestyle) #x, np.sin(x))
 
-        self.widg_ax.set_xlim([5, 120]) # 0,100])
+        self.widg_ax.set_xlim(xrange) # 0,100])
         
         if normalize == False: 
             self.widg_ax.set_ylim([10E-10, 10E-1]) # 0,100])
-            
+        elif yrange != None:
+            self.widg_ax.set_ylim(yrange)
+
+        
             
         self.widg_norm = normalize
             
         #else:
         #    self.widg_ax.set_ylim([
-            
-        self.widg_ax.semilogx()
-        self.widg_ax.semilogy()
+          
+        if logx: self.widg_ax.semilogx()
+        if logy: self.widg_ax.semilogy()
 
    
         interact(self.update_widget,continuous_update=False,
