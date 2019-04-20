@@ -28,7 +28,7 @@ class Abeysuriya2015Model():
         
         self.G_rs = 0.1  # from Abeysuria 2015
         self.G_re = 0.2  # from Abeysuria 2015
-        self.G_sn = 1 # Random <3 John
+        self.G_sn = 1. # Random <3 John
         
         self.l_x = self.l_y = 0.5
         
@@ -43,9 +43,9 @@ class Abeysuriya2015Model():
         # Variable parameters
         self.G_ee = 5.4
         self.G_ei = -7.
-        self.G_ese = 5.6
-        self.G_esre = -2.8
-        self.G_srs = -0.6
+        self.G_ese = 100. # 5.6 # = G_es * G_se
+        self.G_esre = -100. # -2.8 # = G_se * G_sr * G_re
+        self.G_srs = -1. # -0.6 # = G_sr * G_rs
         
         self.alpha = 75 #s^-1
         self.beta = 75*3.8 #s^-1
@@ -56,14 +56,14 @@ class Abeysuriya2015Model():
         # Variable bounds
         self.bound_G_ee = [0., 20.]
         self.bound_G_ei = [-40., 0.]
-        self.bound_G_ese = [0., 40.]
-        self.bound_G_esre = [-40., 0.]
-        self.bound_G_srs = [-14., -0.1]
+        self.bound_G_ese = [0.,200] #[0., 40.]
+        self.bound_G_esre = [-100., 100.] #[-40., 0.]
+        self.bound_G_srs = [-20., 20] # [-14., -0.1]
         
-        self.bound_alpha = [10., 100.]
-        self.bound_beta = [100., 800.]
-        self.bound_t0 = [75., 140.]
-        self.bound_A_EMG = [0., 1E-12]
+        self.bound_alpha = [10., 400.] # 200.]
+        self.bound_beta = [50., 1200.] # 800.]
+        self.bound_t0 = [50., 140.]
+        self.bound_A_EMG = [0.00001, 0.1] # 1E-12]
         self.bound_f_EMG = [10., 50.]
        
 
@@ -118,7 +118,7 @@ class Abeysuriya2015Model():
         if freqs is None: freqs = self.freqs
 
         omega = 2. * pi * freqs
-            
+        
         G_ei, G_ee = self.G_ei, self.G_ee
         G_ese, G_esre, G_srs = self.G_ese, self.G_esre, self.G_srs
         t0 = self.t0
@@ -311,28 +311,28 @@ class Abeysuriya2015Model():
         elif yrange != None:
             self.widg_ax.set_ylim(yrange)
 
+        self.G_sr = self.G_srs / self.G_rs
+        self.G_es = self.G_esre / (self.G_sr * self.G_re)
+        
         
             
         self.widg_norm = normalize
             
-        #else:
-        #    self.widg_ax.set_ylim([
-          
         if logx: self.widg_ax.semilogx()
         if logy: self.widg_ax.semilogy()
 
    
         interact(self.update_widget,continuous_update=False,
-                 G_ee=widgets.IntSlider(min=self.bound_G_ee[0],max=self.bound_G_ee[1],step=1,value=self.G_ee),
-                 G_ei=widgets.IntSlider(min=self.bound_G_ei[0],max=self.bound_G_ei[1],step=1,value=self.G_ei),
-                 G_ese=widgets.IntSlider(min=self.bound_G_ese[0],max=self.bound_G_ese[1],step=1,value=self.G_ese),
-                 G_esre=widgets.IntSlider(min=self.bound_G_esre[0],max=self.bound_G_esre[1],step=1,value=self.G_esre),
-                 G_srs=widgets.IntSlider(min=self.bound_G_srs[0],max=self.bound_G_srs[1],step=1,value=-1.1), # 0.5), # self.G_srs),
-                 alpha=widgets.IntSlider(min=self.bound_alpha[0],max=self.bound_alpha[1],step=1,value=self.alpha),
-                 beta=widgets.IntSlider(min=self.bound_beta[0],max=self.bound_beta[1],step=1,value=self.beta),
-                 t0=widgets.IntSlider(min=self.bound_t0[0],max=self.bound_t0[1],step=1,value=self.t0),
-                 A_EMG=widgets.IntSlider(min=self.bound_A_EMG[0],max=self.bound_A_EMG[1],value=self.A_EMG),#,step=1,value=self.A_EMG),
-                 f_EMG=widgets.IntSlider(min=self.bound_f_EMG[0],max=self.bound_f_EMG[1],step=1,value=self.f_EMG))
+                 G_ee=widgets.FloatSlider(min=self.bound_G_ee[0],max=self.bound_G_ee[1],step=1,value=self.G_ee),
+                 G_ei=widgets.FloatSlider(min=self.bound_G_ei[0],max=self.bound_G_ei[1],step=1,value=self.G_ei),
+                 G_ese=widgets.FloatSlider(min=self.bound_G_ese[0],max=self.bound_G_ese[1],step=1,value=self.G_ese),
+                 G_esre=widgets.FloatSlider(min=self.bound_G_esre[0],max=self.bound_G_esre[1],step=1,value=self.G_esre),
+                 G_srs=widgets.FloatSlider(min=self.bound_G_srs[0],max=self.bound_G_srs[1],step=1,value=-1.1), # 0.5), # self.G_srs),
+                 alpha=widgets.FloatSlider(min=self.bound_alpha[0],max=self.bound_alpha[1],step=1,value=self.alpha),
+                 beta=widgets.FloatSlider(min=self.bound_beta[0],max=self.bound_beta[1],step=1,value=self.beta),
+                 t0=widgets.FloatSlider(min=self.bound_t0[0],max=self.bound_t0[1],step=1,value=self.t0),
+                 A_EMG=widgets.FloatSlider(min=self.bound_A_EMG[0],max=self.bound_A_EMG[1],value=self.A_EMG,step=0.001),#step=1
+                 f_EMG=widgets.FloatSlider(min=self.bound_f_EMG[0],max=self.bound_f_EMG[1],step=1,value=self.f_EMG))
                  
                  
                                         
@@ -345,7 +345,7 @@ class Abeysuriya2015Model():
                           alpha = 75, #s^-1
                           beta = 75*3.8 ,
                           t0 = 84, # ms
-                          A_EMG = 0.5E-12, #s^-1
+                          A_EMG = 0.001, # 0.5E-12, #s^-1
                           f_EMG = 40):
             
             # Variable parameters
